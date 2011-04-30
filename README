@@ -1,0 +1,48 @@
+This project shows how to call a Lua file from Fortran.
+You can also call a Lua file from C, but doing it from an
+even older language seems more dramatic. This also demonstrates
+how to call C libraries directly from Fortran using the
+iso_c_binding.
+
+
+==Compilation==
+This Makefile is made specifically for the Ranger and Lonestar systems.
+It relies on their module command to load packages. In particular,
+you have to ensure Intel Fortran and Lua are loaded. Currently, that
+would require you to type:
+
+  module swap pgi intel
+  module add lua
+
+Then call make to produce an executable.
+
+
+==Discussion==
+
+Why call Lua from Fortran? I can think of two good uses for this.
+Fortran's string parsing is not pretty, so you could
+use a Lua file as a configuration file. You can query environment
+variables and do pre-calculations in the configuration file, yielding
+a result for Fortran to use. You can even pass in functions for
+Fortran to execute.
+
+You could also write a commonly-modified subroutine in Lua so that
+there is no need to recompile the code when you make changes.
+
+Why Lua? It is installed on Ranger. The language is relatively
+simple and has basic math included. It's made to embed in programs.
+That said, it is not a common language. You could do the same
+exercise with Gnu Guile.
+
+How? Lua is a very small language that is built to be embedded.
+It passes all of its state back to the calling program through
+a stack (the stack data structure, but stored on the heap) so that
+it is simple to retrieve.
+
+We use Fortran's iso_c_binding to call the Lua C library directly
+from Fortran. That binding is a relatively new development in
+Fortran, but it works fine.
+
+
+Drew Dolgert
+adolgert@cornell.edu
