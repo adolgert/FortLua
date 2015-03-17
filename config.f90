@@ -53,13 +53,6 @@ MODULE config
       TYPE(c_ptr), value :: lstate
     END SUBROUTINE luaL_openlibs
 
-    !FUNCTION luaL_loadfile(lstate, name) bind(C, name="luaL_loadfile")
-    !  USE iso_c_binding, only: c_int, c_char, c_ptr
-    !  INTEGER(c_int) :: luaL_loadfile
-    !  TYPE(c_ptr), value :: lstate
-    !  CHARACTER(kind=c_char) :: name(*)
-    !END FUNCTION luaL_loadfile
-
     function luaL_loadfilex(L, filename, mode) bind(c, name="luaL_loadfilex")
       use, intrinsic :: iso_c_binding
       type(c_ptr), value :: L
@@ -94,15 +87,6 @@ MODULE config
       character(kind=c_char), dimension(*) :: k
     end subroutine lua_getglobal
 
-    !> lua_getglobal is a macro to lua_getfield
-    !! The globals index value should be -10002 for getglobal.
-    !SUBROUTINE lua_getfield(lstate,idx,name) bind(C,name="lua_getfield")
-    !  USE iso_c_binding, only: c_ptr, c_char, c_int
-    !  TYPE(c_ptr), value :: lstate
-    !  INTEGER(c_int), value :: idx
-    !  CHARACTER(kind=c_char) :: name(*)
-    !END SUBROUTINE lua_getfield
-
     !> Set the top of the stack.
     !! lua_pop is defined as lua_settop(L,-(n)-1) in a macro for C.
     SUBROUTINE lua_settop(lstate,stackIdx) bind(C,name="lua_settop")
@@ -116,15 +100,6 @@ MODULE config
       TYPE(c_ptr), value :: lstate
       REAL(c_double), value :: setval
     END SUBROUTINE lua_pushnumber
-
-    ! FUNCTION lua_pcall(lstate,nargs,nresults,errfunc) bind(C,name="lua_pcall")
-    !   USE iso_c_binding, only: c_ptr, c_int
-    !   INTEGER(c_int) :: lua_pcall
-    !   TYPE(c_ptr), value :: lstate
-    !   INTEGER(c_int), value :: nargs
-    !   INTEGER(c_int), value :: nresults
-    !   INTEGER(c_int), value :: errfunc
-    ! END FUNCTION lua_pcall
 
     function lua_pcallk(L, nargs, nresults, errfunc, ctx, k) bind(c, name="lua_pcallk")
       use, intrinsic :: iso_c_binding
@@ -150,13 +125,6 @@ MODULE config
       TYPE(c_ptr), value :: lstate
       INTEGER(c_int), value :: stackIdx
     END FUNCTION lua_isnumber
-
-    ! FUNCTION lua_tonumber(lstate,stackIdx) bind(C,name="lua_tonumber")
-    !   USE iso_c_binding, only: c_ptr, c_int, c_double
-    !   REAL(c_double) :: lua_tonumber
-    !   TYPE(c_ptr), value :: lstate
-    !   INTEGER(c_int), value :: stackIdx
-    ! END FUNCTION lua_tonumber
 
     function lua_tonumberx(L, index, isnum) bind(c, name="lua_tonumberx")
       use, intrinsic :: iso_c_binding
@@ -193,41 +161,41 @@ MODULE config
       errcode = c_errcode
     end function luaL_loadfile
 
-  function lua_pcall(lstate, nargs, nresults, errfunc) result(errcode)
-    use, intrinsic :: iso_c_binding
-    TYPE(c_ptr), value :: lstate
-    integer :: nargs
-    integer :: nresults
-    integer :: errfunc
-    integer :: errcode
+    function lua_pcall(lstate, nargs, nresults, errfunc) result(errcode)
+      use, intrinsic :: iso_c_binding
+      TYPE(c_ptr), value :: lstate
+      integer :: nargs
+      integer :: nresults
+      integer :: errfunc
+      integer :: errcode
 
-    integer(kind=c_int) :: c_nargs
-    integer(kind=c_int) :: c_nresults
-    integer(kind=c_int) :: c_errfunc
-    integer(kind=c_int) :: c_errcode
+      integer(kind=c_int) :: c_nargs
+      integer(kind=c_int) :: c_nresults
+      integer(kind=c_int) :: c_errfunc
+      integer(kind=c_int) :: c_errcode
 
-    c_nargs = nargs
-    c_nresults = nresults
-    c_errfunc = errfunc
+      c_nargs = nargs
+      c_nresults = nresults
+      c_errfunc = errfunc
 
-    c_errcode = lua_pcallk(lstate, c_nargs, c_nresults, c_errfunc, &
-      &                    0_c_int, C_NULL_PTR)
-    errcode = c_errcode
-  end function lua_pcall
+      c_errcode = lua_pcallk(lstate, c_nargs, c_nresults, c_errfunc, &
+        &                    0_c_int, C_NULL_PTR)
+      errcode = c_errcode
+    end function lua_pcall
 
-  function lua_tonumber(lstate, index) result(number)
-    use, intrinsic :: iso_c_binding
-    TYPE(c_ptr), value :: lstate
-    integer :: index
-    real :: number
+    function lua_tonumber(lstate, index) result(number)
+      use, intrinsic :: iso_c_binding
+      TYPE(c_ptr), value :: lstate
+      integer :: index
+      real :: number
 
-    integer(kind=c_int) :: c_index
-    integer(kind=c_int) :: isnum
+      integer(kind=c_int) :: c_index
+      integer(kind=c_int) :: isnum
 
-    c_index = index
-    number = real(lua_tonumberx(lstate, c_index, isnum), &
-      &           kind=kind(number))
-  end function lua_tonumber
+      c_index = index
+      number = real(lua_tonumberx(lstate, c_index, isnum), &
+        &           kind=kind(number))
+    end function lua_tonumber
 
 
   !> Open a Lua configuration file by name.
