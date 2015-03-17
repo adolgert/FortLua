@@ -11,7 +11,6 @@ MODULE config
   ! The lua_State pointer is stored opaquely in Fortran in this
   ! module-level variable.
   TYPE(c_ptr) :: mluastate
-  !INTEGER(c_int) :: LUA_GLOBALSINDEX = -10002
   INTEGER(c_int) :: LUA_IDSIZE = 60
 
   INTEGER(c_int) :: LUA_TNIL = 0
