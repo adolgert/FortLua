@@ -12,6 +12,7 @@ REAL :: temperature_start
 REAL, DIMENSION(1) :: pressure_args
 INTEGER :: read_status
 INTEGER :: cstatus
+integer :: newval
 
 character(50) :: string
 character(:), allocatable :: astring
@@ -30,6 +31,12 @@ ELSE
   WRITE (*,*) 'error reading temperature'
 ENDIF
 
+newval = config_integer('newval',read_status)
+IF ( read_status .eq. 0 ) THEN
+  WRITE (*,*) 'newval = ', newval
+ELSE
+  WRITE (*,*) 'error reading newval'
+ENDIF
 
 stepcount=10
 
