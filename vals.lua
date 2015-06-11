@@ -7,12 +7,13 @@
 if os.getenv("BATCH") then
    temperature=3.2
 else
-   temperature=4.7
+   temperature=4.8
 end
 
 mintemp=3
 maxtemp=6
 duration=10 -- time to get to 95%
+string='blahjaskdfjfjjjjjjjjjj'
 
 function pressure(time)
   return mintemp+(maxtemp-mintemp)*math.tanh(1.83*time/duration)
