@@ -1,3 +1,10 @@
+FortLua 5.2
+-----------
+
+This is a fork of a simple set of Lua bindings for use in Fortran, tested to be compatible with Lua 5.2.3+.
+
+Most of the original basis work is fully attributed to @adolgert and @adambrozier and creators of Aotus (see attribution clause) below.
+
 This project shows how to call a Lua file from Fortran.
 You can also call a Lua file from C, but doing it from an
 even older language seems more dramatic. This also demonstrates
@@ -46,7 +53,8 @@ Fortran, but it works fine.
 
 Drew Dolgert
 adolgert@cornell.edu
-
+Adam Brazier
+brazier@cornell.edu
 Kevin Manalo
 kmanalo@gmail.com
 
