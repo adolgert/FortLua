@@ -1,21 +1,27 @@
+FortLua 5.2
+-----------
+
+This is a fork of a simple set of Lua bindings for use in Fortran, tested to be compatible with Lua 5.2.3+.
+
+Most of the original basis work is fully attributed to @adolgert and @adambrozier and creators of Aotus (see attribution clause) below.
+
+==Motivation==
+
 This project shows how to call a Lua file from Fortran.
 You can also call a Lua file from C, but doing it from an
 even older language seems more dramatic. This also demonstrates
 how to call C libraries directly from Fortran using the
 iso_c_binding.
 
-
 ==Compilation==
-This Makefile is made specifically for the Ranger and Lonestar systems.
-It relies on their module command to load packages. In particular,
-you have to ensure Intel Fortran and Lua are loaded. Currently, that
-would require you to type:
 
-  module swap pgi intel
-  module add lua
+This project assumes that the Intel compiler suite and Lua are local to your path.  
+On a machine with software modules support do the following:
 
-Then call make to produce an executable.
+   module load intel
+   module load lua
 
+In your environment, `LUA_INC` and `LUA_LIB` must be predefined.  Otherwise the Makefile is unhappy.
 
 ==Discussion==
 
@@ -29,7 +35,7 @@ Fortran to execute.
 You could also write a commonly-modified subroutine in Lua so that
 there is no need to recompile the code when you make changes.
 
-Why Lua? It is installed on Ranger. The language is relatively
+Why Lua? The language is relatively
 simple and has basic math included. It's made to embed in programs.
 That said, it is not a common language. You could do the same
 exercise with Gnu Guile.
@@ -43,6 +49,52 @@ We use Fortran's iso_c_binding to call the Lua C library directly
 from Fortran. That binding is a relatively new development in
 Fortran, but it works fine.
 
-
 Drew Dolgert
 adolgert@cornell.edu
+Adam Brazier
+brazier@cornell.edu
+Kevin Manalo
+kmanalo@gmail.com
+
+This modification to FortLua was derived from routines provided by AOTUS, hence
+their attribution is listed below:
+
+Aotus License
+-------------
+
+Aotus is licensed under the terms of the MIT license reproduced below.
+This means that Aotus is free software and can be used for both academic and
+commercial purposes at absolutely no cost. You are free to do with the code
+whatever you want.
+The only requirement is that some credit to the authors is given by putting this
+copyright notice somewhere in your project.
+The MIT license is chosen for full compatibility with Lua.
+
+For the license of the underlying Lua library have a look at
+http://www.lua.org/license.html.
+
+===============================================================================
+
+Copyright (C) 2011-2013 German Research School for Simulation Sciences GmbH,
+                        Aachen and others.
+              2013-2015 University of Siegen.
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+THE SOFTWARE.
+
+===============================================================================

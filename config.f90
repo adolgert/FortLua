@@ -11,7 +11,6 @@ MODULE config
   ! The lua_State pointer is stored opaquely in Fortran in this
   ! module-level variable.
   TYPE(c_ptr) :: mluastate
-  INTEGER(c_int) :: LUA_GLOBALSINDEX = -10002
   INTEGER(c_int) :: LUA_IDSIZE = 60
 
   INTEGER(c_int) :: LUA_TNIL = 0
@@ -38,7 +37,7 @@ MODULE config
     ! array of single chars.
 
 
-    FUNCTION luaL_newstate bind(C,name="luaL_newstate")
+    FUNCTION luaL_newstate() bind(C,name="luaL_newstate")
       USE iso_c_binding, only: c_ptr, c_funptr
       TYPE(c_ptr) :: luaL_newstate
     END FUNCTION luaL_newstate
@@ -53,12 +52,13 @@ MODULE config
       TYPE(c_ptr), value :: lstate
     END SUBROUTINE luaL_openlibs
 
-    FUNCTION luaL_loadfile(lstate, name) bind(C, name="luaL_loadfile")
-      USE iso_c_binding, only: c_int, c_char, c_ptr
-      INTEGER(c_int) :: luaL_loadfile
-      TYPE(c_ptr), value :: lstate
-      CHARACTER(kind=c_char) :: name(*)
-    END FUNCTION luaL_loadfile
+    function luaL_loadfilex(L, filename, mode) bind(c, name="luaL_loadfilex")
+      use, intrinsic :: iso_c_binding
+      type(c_ptr), value :: L
+      character(kind=c_char), dimension(*) :: filename
+      character(kind=c_char), dimension(*) :: mode
+      integer(kind=c_int) :: luaL_loadfilex
+    end function luaL_loadfilex
 
     FUNCTION lua_gettop(lstate) bind(C, name="lua_gettop")
       USE iso_c_binding, only: c_int, c_ptr
@@ -80,14 +80,11 @@ MODULE config
       INTEGER(c_int), value :: stackIdx
     END FUNCTION lua_checkstack
 
-    !> lua_getglobal is a macro to lua_getfield
-    !! The globals index value should be -10002 for getglobal.
-    SUBROUTINE lua_getfield(lstate,idx,name) bind(C,name="lua_getfield")
-      USE iso_c_binding, only: c_ptr, c_char, c_int
-      TYPE(c_ptr), value :: lstate
-      INTEGER(c_int), value :: idx
-      CHARACTER(kind=c_char) :: name(*)
-    END SUBROUTINE lua_getfield
+    subroutine lua_getglobal(L, k) bind(c, name="lua_getglobal")
+      use, intrinsic :: iso_c_binding
+      type(c_ptr), value :: L
+      character(kind=c_char), dimension(*) :: k
+    end subroutine lua_getglobal
 
     !> Set the top of the stack.
     !! lua_pop is defined as lua_settop(L,-(n)-1) in a macro for C.
@@ -103,14 +100,16 @@ MODULE config
       REAL(c_double), value :: setval
     END SUBROUTINE lua_pushnumber
 
-    FUNCTION lua_pcall(lstate,nargs,nresults,errfunc) bind(C,name="lua_pcall")
-      USE iso_c_binding, only: c_ptr, c_int
-      INTEGER(c_int) :: lua_pcall
-      TYPE(c_ptr), value :: lstate
-      INTEGER(c_int), value :: nargs
-      INTEGER(c_int), value :: nresults
-      INTEGER(c_int), value :: errfunc
-    END FUNCTION lua_pcall
+    function lua_pcallk(L, nargs, nresults, errfunc, ctx, k) bind(c, name="lua_pcallk")
+      use, intrinsic :: iso_c_binding
+      type(c_ptr), value :: L
+      integer(kind=c_int), value :: nargs
+      integer(kind=c_int), value :: nresults
+      integer(kind=c_int), value :: errfunc
+      integer(kind=c_int), value :: ctx
+      type(c_ptr), value :: k
+      integer(kind=c_int) :: lua_pcallk
+    end function lua_pcallk
 
     FUNCTION lua_isfunction(lstate,stackIdx) bind(C,name="lua_isfunction")
       USE iso_c_binding, only: c_ptr, c_int
@@ -126,16 +125,25 @@ MODULE config
       INTEGER(c_int), value :: stackIdx
     END FUNCTION lua_isnumber
 
-    FUNCTION lua_tonumber(lstate,stackIdx) bind(C,name="lua_tonumber")
-      USE iso_c_binding, only: c_ptr, c_int, c_double
-      REAL(c_double) :: lua_tonumber
-      TYPE(c_ptr), value :: lstate
-      INTEGER(c_int), value :: stackIdx
-    END FUNCTION lua_tonumber
+    function lua_tonumberx(L, index, isnum) bind(c, name="lua_tonumberx")
+      use, intrinsic :: iso_c_binding
+      type(c_ptr), value :: L
+      integer(kind=c_int), value :: index
+      integer(kind=c_int) :: isnum
+      real(kind=c_double) :: lua_tonumberx
+    end function lua_tonumberx
+
+    function lua_tolstring(L, index, length) bind(c, name="lua_tolstring")
+      use, intrinsic :: iso_c_binding
+      type(c_ptr), value :: L
+      integer(kind=c_int), value :: index
+      integer(kind=c_size_t) :: length
+      type(c_ptr):: lua_tolstring
+    end function lua_tolstring
 
     FUNCTION lua_tointeger(lstate,stackIdx) bind(C,name="lua_tointeger")
       USE iso_c_binding, only: c_ptr, c_int, c_size_t
-      REAL(c_size_t) :: lua_tointeger
+      INTEGER(c_size_t) :: lua_tointeger
       TYPE(c_ptr), value :: lstate
       INTEGER(c_int), value :: stackIdx
     END FUNCTION lua_tointeger
@@ -144,7 +152,76 @@ MODULE config
 
   CONTAINS
 
+    function luaL_loadfile(lstate, filename) result(errcode)
+      use, intrinsic :: iso_c_binding
+      TYPE(c_ptr), value :: lstate
+      character(len=*) :: filename
+      integer :: errcode
 
+      character(len=len_trim(filename)+1) :: c_filename
+      character(len=3) :: c_mode
+      integer(kind=c_int) :: c_errcode
+
+      c_filename = trim(filename) // c_null_char
+      c_mode = "bt" // c_null_char
+      c_errcode = luaL_loadfilex(lstate, c_filename, c_mode)
+      errcode = c_errcode
+    end function luaL_loadfile
+
+    function lua_pcall(lstate, nargs, nresults, errfunc) result(errcode)
+      use, intrinsic :: iso_c_binding
+      TYPE(c_ptr), value :: lstate
+      integer :: nargs
+      integer :: nresults
+      integer :: errfunc
+      integer :: errcode
+
+      integer(kind=c_int) :: c_nargs
+      integer(kind=c_int) :: c_nresults
+      integer(kind=c_int) :: c_errfunc
+      integer(kind=c_int) :: c_errcode
+
+      c_nargs = nargs
+      c_nresults = nresults
+      c_errfunc = errfunc
+
+      c_errcode = lua_pcallk(lstate, c_nargs, c_nresults, c_errfunc, &
+        &                    0_c_int, C_NULL_PTR)
+      errcode = c_errcode
+    end function lua_pcall
+
+    function lua_tonumber(lstate, index) result(number)
+      use, intrinsic :: iso_c_binding
+      TYPE(c_ptr), value :: lstate
+      integer :: index
+      real :: number
+
+      integer(kind=c_int) :: c_index
+      integer(kind=c_int) :: isnum
+
+      c_index = index
+      number = real(lua_tonumberx(lstate, c_index, isnum), &
+        &           kind=kind(number))
+    end function lua_tonumber
+
+    function lua_tostring(lstate, index, len) result(string)
+      use, intrinsic :: iso_c_binding
+      TYPE(c_ptr), value :: lstate
+      integer :: index
+      integer :: len
+      character,pointer,dimension(:) :: string
+
+      integer :: string_shape(1)
+      integer(kind=c_int) :: c_index
+      integer(kind=c_size_t) :: c_len
+      type(c_ptr) :: c_string
+
+      c_index = index
+      c_string = lua_tolstring(lstate, c_index, c_len)
+      len = int(c_len,kind=kind(len))
+      string_shape(1) = len
+      call c_f_pointer(c_string, string, string_shape)
+    end function lua_tostring
 
   !> Open a Lua configuration file by name.
   !! The state of the Lua file is held in the module and must be
@@ -180,6 +257,39 @@ MODULE config
   END SUBROUTINE config_close
 
 
+  !> Retrieve the value of a character array
+  subroutine config_string(name,status,string)
+    character(len=*), intent(out) :: string
+    character, dimension(:), allocatable :: mystring
+    CHARACTER(LEN=*) :: name
+    INTEGER :: status
+    integer :: length, i
+    INTEGER(c_int) :: stackstart
+    character, pointer :: cstring(:)
+
+    CALL lua_getglobal(mluastate,TRIM(name)//C_NULL_CHAR)
+    
+    !IF ( lua_isnumber(mluastate,-1) .NE. 0 ) THEN
+      cstring => lua_tostring(mluastate,-1, length)
+      allocate(mystring(length))
+      do i=1,length
+        string(i:i) = cstring(i)
+        !mystring(i:i) = cstring(i)
+      end do
+      !print *, mystring
+ 
+      ! This is the same as Lua pop 1.
+      CALL lua_settop(mluastate,-2)
+      status = 0
+    !ELSE
+    !  config_string=''
+    !  status = -1
+    !ENDIF
+    !IF (stackstart .ne. lua_gettop(mluastate)) THEN
+    !   WRITE(*,*) 'The stack is a different size coming out of config_real'
+    !ENDIF
+
+  END subroutine config_string
 
   !> Retrieve the value of a floating point variable.
   FUNCTION config_real(name,status)
@@ -193,8 +303,9 @@ MODULE config
     ! can be difficult.
     stackstart = lua_gettop(mluastate)
 
-    CALL lua_getfield(mluastate,LUA_GLOBALSINDEX,TRIM(name)//C_NULL_CHAR)
-
+    !DBG CALL lua_getfield(mluastate,LUA_GLOBALSINDEX,TRIM(name)//C_NULL_CHAR)
+    CALL lua_getglobal(mluastate,TRIM(name)//C_NULL_CHAR)
+    
     IF ( lua_isnumber(mluastate,-1) .NE. 0 ) THEN
       config_real=lua_tonumber(mluastate,-1)
       ! This is the same as Lua pop 1.
@@ -221,10 +332,10 @@ MODULE config
 
     stackstart = lua_gettop(mluastate)
 
-    CALL lua_getfield(mluastate,LUA_GLOBALSINDEX,TRIM(name)//C_NULL_CHAR)
+    CALL lua_getglobal(mluastate,TRIM(name)//C_NULL_CHAR)
 
     IF ( lua_isnumber(mluastate,-1) .NE. 0 ) THEN
-      config_integer=lua_tointeger(mluastate,-1)
+      config_integer=lua_tonumber(mluastate,-1)
       ! This is the same as Lua pop 1.
       CALL lua_settop(mluastate,-2)
       status = 0
@@ -257,7 +368,7 @@ MODULE config
     config_function = 0
 
 
-    CALL lua_getfield(mluastate,LUA_GLOBALSINDEX,TRIM(name)//C_NULL_CHAR)
+    CALL lua_getglobal(mluastate,TRIM(name)//C_NULL_CHAR)
     IF ( lua_type(mluastate,-1) .eq. LUA_TFUNCTION ) THEN
         DO iargs = 1,nargs
           anarg = args(iargs)
